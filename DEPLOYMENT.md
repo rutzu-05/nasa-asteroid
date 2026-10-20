@@ -23,12 +23,12 @@ Esta guía detalla el paso a paso para publicar el proyecto **NASA JPL Asteroid 
 1. Abre tu navegador e inicia sesión en [GitHub](https://github.com/).
 2. Haz clic en el botón verde **"New"** (o ve a [github.com/new](https://github.com/new)).
 3. Configura el repositorio:
-   - **Repository name**: `nasa-asteroid-prospector` (o el nombre de tu preferencia).
+   - **Repository name**: `nasa-asteroid`
    - **Description**: *API REST de Machine Learning y Dashboard para clasificación y prospección minera de asteroides (NASA JPL).*
    - **Visibility**: **Public** (necesario para el plan gratuito ilimitado de Render).
    - **Initialize this repository with**: No selecciones README, .gitignore ni licencia (ya los tenemos generados localmente).
 4. Haz clic en **"Create repository"**.
-5. Copia la URL del repositorio (ejemplo: `https://github.com/rutzu-05/nasa-asteroid-prospector.git`).
+5. Copia la URL del repositorio (`https://github.com/rutzu-05/nasa-asteroid.git`).
 
 ### 1.2 Inicializar Git y realizar el primer Commit local
 Abre PowerShell o tu terminal en la carpeta del proyecto y ejecuta:
@@ -73,9 +73,9 @@ Render ofrece alojamiento web gratuito para servicios web en Python con soporte 
 1. Inicia sesión en [Render](https://dashboard.render.com/).
 2. En el panel principal, haz clic en **"New +"** en la esquina superior derecha.
 3. Selecciona **"Blueprint"**.
-4. Conecta tu cuenta de GitHub (si aún no lo has hecho) y selecciona el repositorio `nasa-asteroid-prospector`.
+4. Conecta tu cuenta de GitHub (si aún no lo has hecho) y selecciona el repositorio `nasa-asteroid`.
 5. Render detectará automáticamente el archivo `render.yaml` y configurará:
-   - **Service Name**: `nasa-asteroid-prospector`
+   - **Service Name**: `nasa-asteroid`
    - **Environment**: `Python`
    - **Plan**: `Free`
    - **Build Command**: `pip install --upgrade pip && pip install -r requirements.txt`
@@ -91,12 +91,12 @@ Si prefieres configurarlo manualmente en el panel de Render:
 1. Ve a [dashboard.render.com](https://dashboard.render.com/).
 2. Haz clic en **"New +"** > **"Web Service"**.
 3. Selecciona **"Build and deploy from a Git repository"** y presiona **Next**.
-4. Busca y selecciona tu repositorio `nasa-asteroid-prospector`.
+4. Busca y selecciona tu repositorio `nasa-asteroid`.
 5. Rellena los siguientes campos exactamente como se indica:
 
 | Parámetro | Valor a Configurar |
 | :--- | :--- |
-| **Name** | `nasa-asteroid-prospector` |
+| **Name** | `nasa-asteroid` |
 | **Region** | `Oregon (US West)` u `Ohio (US East)` |
 | **Branch** | `main` |
 | **Root Directory** | *(Dejar vacío para usar la raíz)* |
@@ -115,7 +115,7 @@ Si prefieres configurarlo manualmente en el panel de Render:
 
 ## 🔍 Paso 3: Verificación del Despliegue
 
-Una vez que los registros indiquen `==> Your service is live 🎉`, copia la URL generada por Render (ej. `https://nasa-asteroid-prospector.onrender.com`):
+Una vez que los registros indiquen `==> Your service is live 🎉`, copia la URL generada por Render (ej. `https://nasa-asteroid.onrender.com`):
 
 1. **Dashboard Web Interactivo**:
    Abre `https://tu-app.onrender.com/` en tu navegador para interactuar con la interfaz espacial y probar las predicciones en tiempo real.

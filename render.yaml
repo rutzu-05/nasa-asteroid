@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nasa-asteroid-prospector
+    name: nasa-asteroid
     runtime: python
     plan: free
     region: oregon

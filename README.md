@@ -62,8 +62,8 @@ data/
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/tu-usuario/nasa-asteroid-prospector.git
-cd nasa-asteroid-prospector
+git clone https://github.com/rutzu-05/nasa-asteroid.git
+cd nasa-asteroid
 ```
 
 ### 2. Crear y activar un entorno virtual
