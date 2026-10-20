@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NASA JPL Asteroid Prospector | Laboratorio de Prospección ISRU</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Tipografía: Space Grotesk (Titulares), Inter (Cuerpo), JetBrains Mono (Métricas y Coordenadas) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Hoja de Estilos Material 3 -->
+  <link rel="stylesheet" href="/static/style.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            // Paleta Sobria Material 3 / Laboratorio Científico (Sin Neones)
+            lab: {
+              50: '#F8F9FA',
+              100: '#F1F5F9',
+              200: '#E2E8F0',
+              300: '#CBD5E1',
+              400: '#94A3B8',
+              500: '#64748B',
+              600: '#475569',
+              700: '#334155',
+              800: '#1E293B',
+              900: '#0F172A',
+            },
+            // Pigmentos M3 Terrosos y Mapeados a Minerales
+            mineral: {
+              metal: '#854D0E',      // Ámbar bronce oscuro
+              metalBg: '#FEF3C7',
+              carbon: '#065F46',     // Esmeralda/salvia bosque sobrio
+              carbonBg: '#D1FAE5',
+              silicate: '#1E3A8A',   // Azul marino pizarra
+              silicateBg: '#DBEAFE',
+              basalt: '#9A3412',     // Terracota / teja mate
+              basaltBg: '#FFEDD5',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#F8F9FA] text-lab-900 min-h-full flex flex-col font-sans antialiased selection:bg-lab-200 selection:text-lab-900">
+
+  <!-- =========================================================================
+       M3 Top App Bar (Barra Superior de Laboratorio Institucional)
+       ========================================================================= -->
+  <header class="bg-white border-b border-lab-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+      
+      <!-- Marca Institucional -->
+      <div class="flex items-center space-x-3.5">
+        <div class="w-9 h-9 rounded-lg bg-lab-900 flex items-center justify-center text-white font-display font-bold text-sm tracking-wider shadow-xs">
+          JPL
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-display font-bold text-base text-lab-900 tracking-tight">
+              NASA JPL Asteroid Prospector
+            </span>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-lab-100 text-lab-700 border border-lab-200">
+              SBDB ISRU v2.0
+            </span>
+          </div>
+          <p class="text-xs text-lab-500 font-normal">
+            Laboratorio de Clasificación Geoquímica & Evaluación Minera Espacial
+          </p>
+        </div>
+      </div>
+
+      <!-- Indicador de Estado del Servidor & Documentación -->
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2 text-xs bg-lab-50 px-3 py-1.5 rounded-full border border-lab-200">
+          <span id="api-status-dot" class="w-2 h-2 rounded-full bg-emerald-600"></span>
+          <span id="api-status-text" class="text-lab-700 font-mono text-[11px] font-medium">JPL Random Forest: Online</span>
+        </div>
+        <a 
+          href="https://ssd.jpl.nasa.gov/tools/sbdb_query.html" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-lab-700 hover:text-lab-900 bg-white hover:bg-lab-50 border border-lab-200 rounded-lg transition"
+        >
+          <svg class="w-3.5 h-3.5 text-lab-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+          </svg>
+          NASA SBDB
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       Espacio de Trabajo Principal
+       ========================================================================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7">
+
+    <!-- Introducción y Selector de Casos de Misiones (M3 Assist Chips) -->
+    <div class="mb-7 bg-white border border-lab-200 rounded-2xl p-5 sm:p-6 shadow-xs">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-lab-100 border border-lab-200 text-lab-700 text-xs font-medium mb-2.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-lab-700"></span>
+          <span>Modelo de Inferencia Predictiva de Asteroides</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-display font-bold text-lab-900 tracking-tight">
+          Prospección Mineralógica y Viabilidad de Minería Espacial
+        </h1>
+        <p class="mt-2 text-sm text-lab-600 leading-relaxed">
+          Evalúa la viabilidad económica y logística de un asteroide mediante parámetros espectroscópicos y orbitales obtenidos por telescopios. Determina si el objetivo alberga metales preciosos (Au, Pt, Fe), agua criogénica para propelente o silicatos industriales.
+        </p>
+      </div>
+
+      <!-- Presets de Misiones Célebres (Chips) -->
+      <div class="mt-5 pt-4 border-t border-lab-100 flex flex-wrap items-center gap-2 preset-chips">
+        <span class="text-xs text-lab-500 font-semibold uppercase tracking-wider text-[11px] mr-1">
+          Cargar Datos de Misión:
+        </span>
+        <button 
+          type="button" 
+          onclick="loadAsteroidPreset('psyche')" 
+          class="px-3 py-1.5 rounded-lg bg-white hover:bg-lab-50 border border-amber-300 text-amber-900 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs"
+        >
+          <span class="w-2 h-2 rounded-full bg-amber-600"></span>
+          16-Psyche (Metales / Núcleo Fe-Ni)
+        </button>
+        <button 
+          type="button" 
+          onclick="loadAsteroidPreset('bennu')" 
+          class="px-3 py-1.5 rounded-lg bg-white hover:bg-lab-50 border border-emerald-300 text-emerald-900 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs"
+        >
+          <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+          101955-Bennu (Agua / OSIRIS-REx)
+        </button>
+        <button 
+          type="button" 
+          onclick="loadAsteroidPreset('vesta')" 
+          class="px-3 py-1.5 rounded-lg bg-white hover:bg-lab-50 border border-orange-300 text-orange-900 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs"
+        >
+          <span class="w-2 h-2 rounded-full bg-orange-600"></span>
+          4-Vesta (Basáltico / Misión Dawn)
+        </button>
+        <button 
+          type="button" 
+          onclick="loadAsteroidPreset('eros')" 
+          class="px-3 py-1.5 rounded-lg bg-white hover:bg-lab-50 border border-blue-300 text-blue-900 text-xs font-medium transition flex items-center gap-1.5 shadow-2xs"
+        >
+          <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+          433-Eros (Silicatos / Misión NEAR)
+        </button>
+      </div>
+    </div>
+
+    <!-- Grid: Consola de Entrada (Izquierda) + Ficha de Diagnóstico ISRU (Derecha) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
+
+      <!-- =====================================================================
+           PANEL IZQUIERDO: Consola de Telemetría (Formulario Estructurado M3)
+           ===================================================================== -->
+      <div class="lg:col-span-6 bg-white border border-lab-200 rounded-2xl p-6 sm:p-7 shadow-xs">
+        
+        <div class="flex items-center justify-between pb-4 mb-6 border-b border-lab-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-lab-100 flex items-center justify-center text-lab-700">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+            <h2 class="font-display text-base sm:text-lg font-bold text-lab-900 tracking-tight">
+              Telemetría Telescópica y Orbital
+            </h2>
+          </div>
+          <span class="text-[11px] text-lab-500 font-mono">Dataset Oficial NASA JPL</span>
+        </div>
+
+        <form id="asteroid-form" class="space-y-6" novalidate>
+
+          <!-- SECCIÓN 1: PROPIEDADES FOTOMÉTRICAS Y DE SUPERFICIE -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-lab-700 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-lab-900"></span>
+                Fotometría y Reflectividad de Superficie
+              </h3>
+              <span class="text-[11px] text-lab-500">Espectroscopía Visual</span>
+            </div>
+
+            <!-- Albedo Geométrico -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label for="albedo_geometrico" class="text-xs font-semibold text-lab-700">
+                  Albedo Geométrico Visual ($p_v$) *
+                </label>
+                <span id="albedo-category" class="text-xs font-mono font-semibold text-lab-800 px-2 py-0.5 rounded bg-lab-100 border border-lab-200">
+                  0.120 (Reflectivo/Metálico)
+                </span>
+              </div>
+              
+              <div class="relative">
+                <input 
+                  type="number" 
+                  id="albedo_geometrico" 
+                  name="albedo_geometrico" 
+                  step="0.001"
+                  min="0.001"
+                  max="1.0"
+                  placeholder="Ej. 0.120"
+                  class="w-full bg-white border border-lab-300 rounded-xl px-3.5 py-2.5 text-lab-900 placeholder-lab-400 focus:outline-none focus:border-lab-900 focus:ring-1 focus:ring-lab-900 transition text-sm font-mono"
+                  required
+                >
+              </div>
+
+              <!-- Espectrofotómetro de Albedo Analítico (Sin Colores Neón) -->
+              <div class="mt-2.5 p-2.5 bg-lab-50 border border-lab-200 rounded-xl">
+                <div class="flex justify-between text-[11px] text-lab-600 font-mono mb-1.5">
+                  <span>0.03 Carbón Oscuro</span>
+                  <span>0.15 Silicatos</span>
+                  <span>0.25 Metales</span>
+                  <span>0.40+ Basalto</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-gradient-to-r from-stone-800 via-amber-800 to-slate-200 overflow-hidden relative border border-lab-200">
+                  <div id="albedo-indicator" class="absolute top-0 bottom-0 w-3 bg-lab-900 border-2 border-white rounded-full shadow-xs transition-all duration-300" style="left: 12%;"></div>
+                </div>
+              </div>
+              <p id="albedo-error" class="error-msg hidden text-xs text-red-600 mt-1 font-medium">El albedo debe ser un valor numérico entre 0.001 y 1.0.</p>
+            </div>
+
+            <!-- Magnitud Absoluta H y Diámetro -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div class="flex justify-between items-center mb-1.5">
+                  <label for="magnitud_absoluta_H" class="text-xs font-semibold text-lab-700">
+                    Magnitud Absoluta (H) *
+                  </label>
+                  <span id="h-helper" class="text-[11px] text-lab-600 font-mono font-medium">Brillo Alto</span>
+                </div>
+                <div class="relative">
+                  <input 
+                    type="number" 
+                    id="magnitud_absoluta_H" 
+                    name="magnitud_absoluta_H" 
+                    step="0.01"
+                    min="-5"
+                    max="35"
+                    placeholder="Ej. 5.90"
+                    class="w-full bg-white border border-lab-300 rounded-xl px-3.5 py-2.5 text-lab-900 placeholder-lab-400 focus:outline-none focus:border-lab-900 focus:ring-1 focus:ring-lab-900 transition text-sm font-mono pr-12"
+                    required
+                  >
+                  <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-lab-400 pointer-events-none">mag</span>
+                </div>
+                <p id="h-error" class="error-msg hidden text-xs text-red-600 mt-1 font-medium">Magnitud válida entre -5.0 y 35.0.</p>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-center mb-1.5">
+                  <label for="diametro_km" class="text-xs font-semibold text-lab-700">
+                    Diámetro Medio *
+                  </label>
+                  <span id="diameter-helper" class="text-[11px] text-lab-600 font-mono font-medium">226 km</span>
+                </div>
+                <div class="relative">
+                  <input 
+                    type="number" 
+                    id="diametro_km" 
+                    name="diametro_km" 
+                    step="0.01"
+                    min="0.001"
+                    placeholder="Ej. 226.0"
+                    class="w-full bg-white border border-lab-300 rounded-xl px-3.5 py-2.5 text-lab-900 placeholder-lab-400 focus:outline-none focus:border-lab-900 focus:ring-1 focus:ring-lab-900 transition text-sm font-mono pr-12"
+                    required
+                  >
+                  <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-lab-400 pointer-events-none">km</span>
+                </div>
+                <p id="diameter-error" class="error-msg hidden text-xs text-red-600 mt-1 font-medium">El diámetro debe ser un valor positivo mayor a 0.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 2: MECÁNICA ORBITAL & TRAYECTORIA KEPLERIANA -->
+          <div class="space-y-4 pt-4 border-t border-lab-100">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-lab-700 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-lab-900"></span>
+                Parámetros de Navegación y Mecánica Orbital
+              </h3>
+              <span class="text-[11px] text-lab-500">Elementos Keplerianos</span>
+            </div>
+
+            <!-- Semieje Mayor (a) y Perihelio (q) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div class="flex justify-between items-center mb-1.5">
+                  <label for="semieje_mayor_au" class="text-xs font-semibold text-lab-700">
+                    Semieje Mayor (a) *
+                  </label>
+                  <span id="orbit-zone-chip" class="text-[10px] text-lab-700 font-mono font-medium px-1.5 py-0.5 rounded bg-lab-100 border border-lab-200">
+                    Cinturón Principal
+                  </span>
+                </div>
+                <div class="relative">
+                  <input 
+                    type="number" 
+                    id="semieje_mayor_au" 
+                    name="semieje_mayor_au" 
+                    step="0.001"
+                    min="0.01"
+                    placeholder="Ej. 2.924"
+                    class="w-full bg-white border border-lab-300 rounded-xl px-3.5 py-2.5 text-lab-900 placeholder-lab-400 focus:outline-none focus:border-lab-900 focus:ring-1 focus:ring-lab-900 transition text-sm font-mono pr-12"
+                    required
+                  >
+                  <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-lab-400 pointer-events-none">AU</span>
+                </div>
+                <p id="semieje-error" class="error-msg hidden text-xs text-red-600 mt-1 font-medium">Semieje mayor en AU debe ser > 0.</p>
+              </div>
+
+              <div>
+                <label for="distancia_perihelio_au" class="block text-xs font-semibold text-lab-700 mb-1.5">
+                  Distancia Perihelio (q) *
+                </label>
+                <div class="relative">
+                  <input 
+                    type="number" 
+                    id="distancia_perihelio_au" 
+                    name="distancia_perihelio_au" 
+                    step="0.001"
+                    min="0.01"
+                    placeholder="Ej. 2.532"
+                    class="w-full bg-white border border-lab-300 rounded-xl px-3.5 py-2.5 text-lab-900 placeholder-lab-400 focus:outline-none focus:border-lab-900 focus:ring-1 focus:ring-lab-900 transition text-sm font-mono pr-12"
+                    required
+                  >
+                  <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-lab-400 pointer-events-none">AU</span>
+                </div>
+                <p id="perihelio-error" class="error-msg hidden text-xs text-red-600 mt-1 font-medium">El perihelio debe ser > 0.</p>
+              </div>
+            </div>
+
+            <!-- Excentricidad, Inclinación y Rotación -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label for="excentricidad" class="block text-xs font-semibold text-lab-700 mb-1.5">
+                  Excentricidad (e) *
+                </label>
+                <input 
+                  type="number" 
+                  id="excentricidad" 
+                  name="excentricidad" 
+                  step="0.001"
+                  min="0.0"
+                  max="1.5"
+                  placeholder="Ej. 0.134"
+                  class="w-full bg-white border border-lab-300 rounded-xl px-3 py-2 text-lab-900 placeholder-lab-400 focus:outline-none focus:border-lab-900 focus:ring-1 focus:ring-lab-900 transition text-xs font-mono"
+                  required
+                >
+                <p id="excentricidad-error" class="error-msg hidden text-[11px] text-red-600 mt-1 font-medium">Rango 0.0 a 1.5.</p>
+              </div>
+
+              <div>
+                <label for="inclinacion_grados" class="block text-xs font-semibold text-lab-700 mb-1.5">
+                  Inclinación (i) *
+                </label>
+                <div class="relative">
+                  <input 
+                    type="number" 
+                    id="inclinacion_grados" 
+                    name="inclinacion_grados" 
+                    step="0.01"
+                    min="0.0"
+                    max="180.0"
+                    placeholder="Ej. 3.09"
+                    class="w-full bg-white border border-lab-300 rounded-xl px-3 py-2 text-lab-900 placeholder-lab-400 focus:outline-none focus:border-lab-900 focus:ring-1 focus:ring-lab-900 transition text-xs font-mono pr-7"
+                    required
+                  >
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-lab-400 pointer-events-none">°</span>
+                </div>
+                <p id="inclinacion-error" class="error-msg hidden text-[11px] text-red-600 mt-1 font-medium">Rango 0° a 180°.</p>
+              </div>
+
+              <div>
+                <label for="periodo_rotacion_horas" class="block text-xs font-semibold text-lab-700 mb-1.5">
+                  Rotación Axial
+                </label>
+                <div class="relative">
+                  <input 
+                    type="number" 
+                    id="periodo_rotacion_horas" 
+                    name="periodo_rotacion_horas" 
+                    step="0.01"
+                    min="0.01"
+                    placeholder="Ej. 4.2"
+                    class="w-full bg-white border border-lab-300 rounded-xl px-3 py-2 text-lab-900 placeholder-lab-400 focus:outline-none focus:border-lab-900 focus:ring-1 focus:ring-lab-900 transition text-xs font-mono pr-7"
+                  >
+                  <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-lab-400 pointer-events-none">h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón de Envío (M3 Filled Primary Button - Sin Degradado Neón) -->
+          <div class="pt-2">
+            <button 
+              type="submit" 
+              id="submit-btn"
+              class="w-full py-3.5 px-6 rounded-xl font-display font-semibold text-sm tracking-wide text-white bg-lab-900 hover:bg-lab-800 active:bg-lab-950 shadow-xs transition flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-lab-900 focus:ring-offset-2"
+            >
+              <span id="btn-spinner" class="hidden">
+                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              <span id="btn-text">Ejecutar Diagnóstico de Prospección</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- =====================================================================
+           PANEL DERECHO: Ficha de Diagnóstico ISRU & Reporte Científico
+           ===================================================================== -->
+      <div class="lg:col-span-6">
+
+        <!-- Estado Vacío (M3 Laboratory Empty State) -->
+        <div id="empty-state" class="bg-white border border-dashed border-lab-300 rounded-2xl p-10 text-center flex flex-col items-center justify-center min-h-[580px] shadow-2xs">
+          <div class="w-14 h-14 rounded-2xl bg-lab-100 border border-lab-200 flex items-center justify-center mb-4 text-lab-600">
+            <!-- Icono Retícula Científica -->
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 2v4m0 12v4M2 12h4m12 0h4m-7 0a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <h3 class="font-display font-semibold text-lg text-lab-900 mb-1">
+            Esperando Telemetría Telescópica
+          </h3>
+          <p class="text-sm text-lab-600 max-w-sm mb-5 leading-relaxed">
+            Ingresa las variables fotométricas y orbitales en la consola izquierda, o selecciona uno de los casos de misión de la NASA para calcular la taxonomía espectral y viabilidad minera.
+          </p>
+          <div class="flex items-center gap-2 text-xs text-lab-500 font-mono bg-lab-50 px-3 py-1.5 rounded-lg border border-lab-200">
+            <span>Algoritmo: Random Forest Multiclase (NASA JPL)</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta de Resultados (Se activa con app.js) -->
+        <div id="results-card" class="hidden bg-white border border-lab-200 rounded-2xl p-6 sm:p-7 shadow-xs space-y-6 animate-fade-in">
+
+          <!-- Diagnóstico Principal de Taxonomía -->
+          <div class="flex items-start justify-between border-b border-lab-200 pb-5">
+            <div>
+              <span class="text-[11px] uppercase tracking-wider text-lab-500 font-semibold font-mono">
+                Clasificación Espectral Tholen / DeMeo
+              </span>
+              <h3 id="result-title" class="text-2xl font-display font-bold text-lab-900 mt-1 flex items-center gap-2.5">
+                <span id="result-icon" class="text-2xl">💎</span>
+                <span id="result-family">Metálico (Fe-Ni, Oro, Platino)</span>
+              </h3>
+              <div class="mt-2 flex items-center gap-2">
+                <span id="result-orbit-badge" class="inline-flex items-center gap-1.5 text-xs text-lab-700 font-mono px-2.5 py-1 rounded-md bg-lab-100 border border-lab-200">
+                  🪐 Cinturón Principal de Asteroides
+                </span>
+              </div>
+            </div>
+
+            <div class="text-right">
+              <span class="text-xs text-lab-500 block font-medium">Nivel de Confianza</span>
+              <span id="result-confidence" class="font-display font-bold text-3xl text-lab-900 tabular-nums">96.8%</span>
+            </div>
+          </div>
+
+          <!-- Matriz de Viabilidad Minera Espacial (ISRU) -->
+          <div id="mining-viability-card" class="rounded-xl p-4 border border-lab-200 bg-lab-50 transition-all">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs uppercase font-bold tracking-wider text-lab-800 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-lab-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                Evaluación de Recursos Mineros (ISRU)
+              </span>
+              <span id="mining-badge-tag" class="text-[11px] font-bold font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
+                Prioridad Máxima
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+              <div class="bg-white p-3 rounded-lg border border-lab-200">
+                <span class="text-lab-500 block text-[11px] mb-0.5">💰 Metales Preciosos (Au, Pt, Ni, Fe):</span>
+                <span id="mining-metals" class="font-semibold text-lab-900">Muy Alto (Aleaciones masivas)</span>
+              </div>
+              <div class="bg-white p-3 rounded-lg border border-lab-200">
+                <span class="text-lab-500 block text-[11px] mb-0.5">💧 Agua & Propelente (H2O, H2/O2):</span>
+                <span id="mining-water" class="font-semibold text-lab-900">Bajo / Nulo</span>
+              </div>
+              <div class="bg-white p-3 rounded-lg border border-lab-200 sm:col-span-2">
+                <span class="text-lab-500 block text-[11px] mb-0.5">🚀 Veredicto para Misión Espacial:</span>
+                <span id="mining-verdict" class="font-bold text-lab-900 text-xs">Objetivo de Máxima Prioridad Económica</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Distribución de Probabilidades Taxonómicas (M3 Linear Progress Bars) -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-xs font-semibold uppercase tracking-wider text-lab-700">
+                Distribución de Probabilidades del Modelo
+              </h4>
+              <span class="text-[11px] font-mono text-lab-500">4 Clases Taxonómicas</span>
+            </div>
+            <div id="probabilities-container" class="space-y-3">
+              <!-- Se inyectan dinámicamente con app.js -->
+            </div>
+          </div>
+
+          <!-- Especificación Técnica del Objetivo Mineralógico -->
+          <div class="grid grid-cols-2 gap-3 text-xs bg-lab-50 rounded-xl p-4 border border-lab-200">
+            <div>
+              <span class="text-lab-500 block text-[11px] mb-0.5">Minerales Dominantes:</span>
+              <span id="meta-minerals" class="text-lab-900 font-semibold">Hierro, Níquel, Oro, Platino</span>
+            </div>
+            <div>
+              <span class="text-lab-500 block text-[11px] mb-0.5">Rango Albedo Típico:</span>
+              <span id="meta-albedo" class="text-lab-900 font-semibold font-mono">0.10 - 0.25</span>
+            </div>
+            <div class="col-span-2 pt-2.5 border-t border-lab-200">
+              <span class="text-lab-500 block text-[11px] mb-0.5">Objetivo Recomendado de Misión:</span>
+              <p id="meta-objective" class="text-lab-700 text-xs leading-relaxed">
+                Extracción minera de metales nobles para manufactura orbital (ej. Misión NASA Psyche).
+              </p>
+            </div>
+          </div>
+
+          <!-- Justificación Astrofísica y Algorítmica (Callout de Laboratorio) -->
+          <div class="bg-lab-100 border-l-4 border-lab-700 rounded-r-xl p-4 text-xs text-lab-700 leading-relaxed">
+            <strong class="font-bold text-lab-900 block mb-1 flex items-center gap-1.5 text-[11px]">
+              <svg class="w-4 h-4 text-lab-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Justificación Astrofísica del Algoritmo:
+            </strong>
+            <span id="result-interpretation" class="text-lab-700">...</span>
+          </div>
+
+          <!-- Acciones de Reporte y Reinicio -->
+          <div class="flex items-center justify-between pt-2 border-t border-lab-200 text-xs text-lab-500">
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                onclick="window.print()" 
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-lab-200 bg-white hover:bg-lab-50 text-lab-700 font-medium transition cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5 text-lab-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                Imprimir Ficha
+              </button>
+            </div>
+            <button 
+              type="button" 
+              onclick="resetAsteroidForm()" 
+              class="text-lab-700 hover:text-lab-900 font-medium underline cursor-pointer"
+            >
+              Evaluar otro asteroide
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- =========================================================================
+       Footer de Laboratorio Institucional
+       ========================================================================= -->
+  <footer class="border-t border-lab-200 bg-white mt-auto py-6 text-center text-xs text-lab-500">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>
+        Desarrollado para la Prospección y Clasificación de Asteroides con datos de 
+        <a href="https://ssd.jpl.nasa.gov/tools/sbdb_query.html" target="_blank" rel="noopener noreferrer" class="text-lab-800 underline font-medium hover:text-lab-950">
+          NASA JPL Solar System Dynamics
+        </a>.
+      </p>
+      <p class="mt-1 font-mono text-[11px] text-lab-400">
+        Random Forest Multiclase & Detector Binario | Material 3 Scientific System | FastAPI Backend
+      </p>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

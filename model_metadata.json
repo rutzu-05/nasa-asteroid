@@ -1,0 +1,60 @@
+{
+  "model_name": "NASA Meteorite Composition Random Forest",
+  "algorithm": "RandomForestClassifier",
+  "feature_columns": [
+    "log_mass",
+    "fall_num",
+    "year",
+    "reclat",
+    "reclong",
+    "abs_lat",
+    "is_polar"
+  ],
+  "classes": [
+    "Basáltico / Acondrita (Magmático)",
+    "Carbonáceo (Carbono, Volátiles)",
+    "Metálico (Fe-Ni, Oro, Platino)",
+    "Silicatos / Rocoso (Mg-Fe)"
+  ],
+  "metrics": {
+    "multiclass_accuracy": 0.6278,
+    "multiclass_oob_score": 0.5952,
+    "binary_metallic_accuracy": 0.8937,
+    "binary_metallic_auc": 0.9511
+  },
+  "feature_importances": {
+    "log_mass": 0.2729,
+    "fall_num": 0.029,
+    "year": 0.2047,
+    "reclat": 0.1584,
+    "reclong": 0.1725,
+    "abs_lat": 0.1496,
+    "is_polar": 0.0129
+  },
+  "family_descriptions": {
+    "Metálico (Fe-Ni, Oro, Platino)": {
+      "descripcion": "Cuerpo de alta densidad formado principalmente por aleaciones de Hierro y Níquel (kamacita y taenita), con concentraciones de metales del grupo del platino (Pt, Ir, Os) y oro (Au).",
+      "densidad_aprox": "7.0 - 8.0 g/cm3",
+      "origen": "Núcleos diferenciados de protoplanetas destruidos en el cinturón de asteroides.",
+      "icono": "💎"
+    },
+    "Carbonáceo (Carbono, Volátiles)": {
+      "descripcion": "Meteoritos primitivos ricos en compuestos orgánicos, aminoácidos, agua ligada y minerales hidratados de carbono.",
+      "densidad_aprox": "2.2 - 2.9 g/cm3",
+      "origen": "Cometas y asteroides exteriores inalterados desde el origen del Sistema Solar.",
+      "icono": "🌱"
+    },
+    "Silicatos / Rocoso (Mg-Fe)": {
+      "descripcion": "La familia más abundante (condritas ordinarias). Compuestos de silicatos de magnesio y hierro (olivino y piroxeno) con pequeñas inclusiones metálicas.",
+      "densidad_aprox": "3.0 - 3.8 g/cm3",
+      "origen": "Corteza y manto de asteroides no fundidos.",
+      "icono": "🪨"
+    },
+    "Basáltico / Acondrita (Magmático)": {
+      "descripcion": "Rocas ígneas espaciales originadas por vulcanismo y procesos magmáticos similares a la lava terrestre o corteza lunar y marciana.",
+      "densidad_aprox": "2.9 - 3.4 g/cm3",
+      "origen": "Corteza de cuerpos masivos como el asteroide 4-Vesta, la Luna y Marte.",
+      "icono": "🌋"
+    }
+  }
+}

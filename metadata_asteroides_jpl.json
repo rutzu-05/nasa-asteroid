@@ -1,0 +1,63 @@
+{
+  "dataset": "NASA JPL Small-Body Database (SBDB)",
+  "fuente_oficial": "https://ssd.jpl.nasa.gov/tools/sbdb_query.html",
+  "algoritmo": "Random Forest Classifier",
+  "features": [
+    "magnitud_absoluta_H",
+    "albedo_geometrico",
+    "diametro_km",
+    "semieje_mayor_au",
+    "excentricidad",
+    "inclinacion_grados",
+    "distancia_perihelio_au",
+    "periodo_rotacion_horas"
+  ],
+  "clases": [
+    "Basáltico (Magmático, Rocas Ígneas)",
+    "Carbonáceo (Agua, Compuestos Orgánicos)",
+    "Metálico (Fe-Ni, Oro, Platino)",
+    "Silicatos / Rocoso (Mg-Fe, Piroxeno)"
+  ],
+  "metricas": {
+    "exactitud_multiclase": 0.761,
+    "oob_score": 0.7535,
+    "exactitud_metalica": 0.7412,
+    "roc_auc_metalica": 0.7318
+  },
+  "importancia_variables": {
+    "magnitud_absoluta_H": 0.1029,
+    "albedo_geometrico": 0.2471,
+    "diametro_km": 0.1507,
+    "semieje_mayor_au": 0.1452,
+    "excentricidad": 0.0853,
+    "inclinacion_grados": 0.0873,
+    "distancia_perihelio_au": 0.1081,
+    "periodo_rotacion_horas": 0.0733
+  },
+  "descripcion_familias_mineras": {
+    "Metálico (Fe-Ni, Oro, Platino)": {
+      "minerales_clave": "Hierro (Fe), Níquel (Ni), Cobalto (Co), Oro (Au), Platino (Pt), Iridio (Ir)",
+      "albedo_tipico": "0.10 - 0.25 (Reflectividad metálica en radar)",
+      "objetivo_mision": "Minería espacial de metales preciosos e industriales para manufactura orbital (ej. Misión NASA Psyche).",
+      "icono": "💎"
+    },
+    "Carbonáceo (Agua, Compuestos Orgánicos)": {
+      "minerales_clave": "Carbono elemental, aminoácidos, arcillas hidratadas, agua ligada (H2O)",
+      "albedo_tipico": "0.03 - 0.08 (Muy oscuros, absorben luz)",
+      "objetivo_mision": "Extracción de agua para soporte vital y producción de combustible espacial (H2/O2) (ej. Misión OSIRIS-REx a Bennu).",
+      "icono": "🌱"
+    },
+    "Silicatos / Rocoso (Mg-Fe, Piroxeno)": {
+      "minerales_clave": "Olivino, Piroxeno, Silicatos de magnesio y hierro",
+      "albedo_tipico": "0.15 - 0.25 (Brillo intermedio)",
+      "objetivo_mision": "Materiales pétreos y silicio para paneles solares y blindaje contra radiación.",
+      "icono": "🪨"
+    },
+    "Basáltico (Magmático, Rocas Ígneas)": {
+      "minerales_clave": "Basalto, plagioclasa cálcica, piroxenos ricos en hierro",
+      "albedo_tipico": "0.30 - 0.45 (Muy brillantes)",
+      "objetivo_mision": "Corteza de asteroides diferenciados con historia volcánica (tipo asteroide 4-Vesta).",
+      "icono": "🌋"
+    }
+  }
+}
