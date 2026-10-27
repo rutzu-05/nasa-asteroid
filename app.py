@@ -10,11 +10,17 @@ from typing import Dict, Any, Optional
 import joblib
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, UploadFile, File, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
+
+from batch_processor import (
+    read_uploaded_file,
+    process_batch_dataframe,
+    generate_enriched_csv
+)
 
 # =============================================================================
 # INICIALIZACIÓN DE LA APLICACIÓN FASTAPI
@@ -303,6 +309,105 @@ def predict_asteroid_composition(data: AsteroidInput):
             "semieje_au": a
         }
     )
+
+# =============================================================================
+# ENDPOINTS DE PROCESAMIENTO MASIVO (CSV / EXCEL)
+# =============================================================================
+@app.get("/api/v1/template/csv", tags=["Procesamiento Masivo"])
+def download_csv_template():
+    """Descarga un archivo CSV de prueba preconfigurado con asteroides del catálogo de la NASA."""
+    template_path = os.path.join(BASE_DIR, "prueba_asteroides_entrada.csv")
+    if not os.path.exists(template_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Plantilla CSV no encontrada en el servidor."
+        )
+    return FileResponse(
+        template_path,
+        media_type="text/csv",
+        filename="plantilla_asteroides_prueba.csv"
+    )
+
+@app.post("/api/v1/predict/batch", tags=["Procesamiento Masivo"])
+async def predict_batch_asteroids(file: UploadFile = File(...)):
+    """
+    Recibe un archivo CSV o Excel (.xlsx/.xls) con telemetría de asteroides,
+    ejecuta inferencia masiva y devuelve un reporte estadístico e informe analítico ISRU.
+    """
+    if rf_multi is None or rf_bin is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Los modelos de Machine Learning no están cargados en el servidor."
+        )
+
+    try:
+        contents = await file.read()
+        raw_df = read_uploaded_file(contents, file.filename)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error al leer el archivo: {str(e)}"
+        )
+
+    try:
+        result = process_batch_dataframe(raw_df, rf_multi, rf_bin, metadata)
+        # Quitar el DataFrame interno antes de retornar JSON
+        result.pop("_valid_df", None)
+        return result
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(ve)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error inesperado durante el procesamiento masivo: {str(e)}"
+        )
+
+@app.post("/api/v1/predict/batch/export", tags=["Procesamiento Masivo"])
+async def export_batch_predictions_csv(file: UploadFile = File(...)):
+    """
+    Recibe un archivo CSV o Excel y devuelve directamente un archivo CSV enriquecido
+    con las predicciones del modelo, probabilidades, potencial minero y zona orbital.
+    """
+    if rf_multi is None or rf_bin is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Los modelos de Machine Learning no están cargados en el servidor."
+        )
+
+    try:
+        contents = await file.read()
+        raw_df = read_uploaded_file(contents, file.filename)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error al leer el archivo: {str(e)}"
+        )
+
+    try:
+        result = process_batch_dataframe(raw_df, rf_multi, rf_bin, metadata)
+        valid_df = result.get("_valid_df")
+        csv_text = generate_enriched_csv(valid_df)
+        
+        return Response(
+            content=csv_text,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": 'attachment; filename="reporte_asteroides_predicciones.csv"'
+            }
+        )
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(ve)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al generar exportación CSV: {str(e)}"
+        )
 
 # =============================================================================
 # SERVIR FRONTEND ESTÁTICO

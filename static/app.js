@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkApiHealth();
   setupDynamicHelpers();
   setupFormValidationAndSubmit();
+  setupBatchProcessing();
 });
 
 // 1. Verificación de Salud del API
@@ -419,3 +420,434 @@ function resetAsteroidForm() {
 
 window.loadAsteroidPreset = loadAsteroidPreset;
 window.resetAsteroidForm = resetAsteroidForm;
+
+// =============================================================================
+// SECCIÓN: PROCESAMIENTO MASIVO Y REPORTES (EXCEL / CSV)
+// =============================================================================
+
+let currentBatchReport = null;
+let currentBatchFile = null;
+let currentFilteredRecords = [];
+
+// 7. Selector de Modos (Individual vs Masivo)
+function switchMode(mode) {
+  const singleView = document.getElementById('single-mode-view');
+  const batchView = document.getElementById('batch-mode-view');
+  const singleBtn = document.getElementById('tab-single-btn');
+  const batchBtn = document.getElementById('tab-batch-btn');
+
+  if (mode === 'single') {
+    singleView.classList.remove('hidden');
+    batchView.classList.add('hidden');
+    
+    singleBtn.className = 'px-4 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-lab-900 shadow-2xs cursor-pointer';
+    batchBtn.className = 'px-4 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-lab-600 hover:text-lab-900 cursor-pointer';
+  } else {
+    singleView.classList.add('hidden');
+    batchView.classList.remove('hidden');
+
+    singleBtn.className = 'px-4 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2 text-lab-600 hover:text-lab-900 cursor-pointer';
+    batchBtn.className = 'px-4 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2 bg-white text-lab-900 shadow-2xs cursor-pointer';
+  }
+}
+
+// 8. Inicialización de Eventos de Carga Drag & Drop
+function setupBatchProcessing() {
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('batch-file-input');
+
+  if (!dropzone || !fileInput) return;
+
+  // Eventos de arrastre
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('drag-over');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('drag-over');
+    }, false);
+  });
+
+  // Al soltar el archivo
+  dropzone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files && files.length > 0) {
+      handleFileSelected(files[0]);
+    }
+  });
+
+  // Al seleccionar mediante el explorador
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileSelected(e.target.files[0]);
+    }
+  });
+}
+
+// 9. Manejo del Archivo Seleccionado
+function handleFileSelected(file) {
+  currentBatchFile = file;
+  const badge = document.getElementById('selected-file-badge');
+  const nameSpan = document.getElementById('selected-file-name');
+
+  if (badge && nameSpan) {
+    nameSpan.innerText = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    badge.classList.remove('hidden');
+    badge.classList.add('inline-flex');
+  }
+
+  processBatchFile(file);
+}
+
+function clearSelectedFile(event) {
+  if (event) event.stopPropagation();
+  currentBatchFile = null;
+  const fileInput = document.getElementById('batch-file-input');
+  if (fileInput) fileInput.value = '';
+  
+  const badge = document.getElementById('selected-file-badge');
+  if (badge) {
+    badge.classList.add('hidden');
+    badge.classList.remove('inline-flex');
+  }
+}
+
+// 10. Cargar y Procesar Dataset de Prueba de la NASA Automáticamente
+async function loadAndRunSampleDataset() {
+  const progressBox = document.getElementById('batch-progress');
+  const errorBox = document.getElementById('batch-error-box');
+  
+  if (errorBox) errorBox.classList.add('hidden');
+  if (progressBox) progressBox.classList.remove('hidden');
+
+  try {
+    const res = await fetch('/api/v1/template/csv');
+    if (!res.ok) throw new Error('No se pudo descargar la plantilla de prueba desde el servidor.');
+    
+    const blob = await res.blob();
+    const testFile = new File([blob], 'prueba_asteroides_entrada.csv', { type: 'text/csv' });
+    
+    handleFileSelected(testFile);
+  } catch (err) {
+    if (progressBox) progressBox.classList.add('hidden');
+    if (errorBox) {
+      errorBox.classList.remove('hidden');
+      document.getElementById('batch-error-message').innerText = err.message;
+    }
+  }
+}
+
+// 11. Envío al Servidor y Ejecución del Motor Masivo
+async function processBatchFile(file) {
+  const progressBox = document.getElementById('batch-progress');
+  const progressBar = document.getElementById('batch-progress-bar');
+  const progressStatus = document.getElementById('batch-progress-status');
+  const errorBox = document.getElementById('batch-error-box');
+  const reportContainer = document.getElementById('batch-report-container');
+
+  if (errorBox) errorBox.classList.add('hidden');
+  if (progressBox) progressBox.classList.remove('hidden');
+  if (progressBar) progressBar.style.width = '20%';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    if (progressBar) progressBar.style.width = '60%';
+
+    const response = await fetch('/api/v1/predict/batch', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (progressBar) progressBar.style.width = '90%';
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || `Error del servidor HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    currentBatchReport = data;
+
+    if (progressBar) progressBar.style.width = '100%';
+    setTimeout(() => {
+      if (progressBox) progressBox.classList.add('hidden');
+    }, 400);
+
+    renderBatchReport(data);
+
+  } catch (err) {
+    if (progressBox) progressBox.classList.add('hidden');
+    if (errorBox) {
+      errorBox.classList.remove('hidden');
+      document.getElementById('batch-error-message').innerText = err.message;
+    }
+  }
+}
+
+// 12. Renderizado del Reporte Masivo
+function renderBatchReport(data) {
+  const summary = data.summary;
+  const reportContainer = document.getElementById('batch-report-container');
+
+  // Actualizar KPIs Ejecutivos
+  document.getElementById('report-batch-badge').innerText = `${summary.total_registros} Cuerpos Analizados`;
+  document.getElementById('kpi-total-count').innerText = summary.total_registros;
+  document.getElementById('kpi-valid-rate').innerText = `${Math.round((summary.registros_validos / summary.total_registros) * 100)}% Válidos`;
+  document.getElementById('kpi-avg-diam').innerText = `${summary.diametro_promedio_km} km`;
+
+  document.getElementById('kpi-metal-count').innerText = summary.conteo_metalicos;
+  document.getElementById('kpi-metal-pct').innerText = `${summary.porcentaje_metalicos}%`;
+
+  document.getElementById('kpi-water-count').innerText = summary.conteo_recursos_hidricos;
+  document.getElementById('kpi-water-pct').innerText = `${summary.porcentaje_recursos_hidricos}%`;
+
+  document.getElementById('kpi-neo-count').innerText = summary.conteo_neos;
+  document.getElementById('kpi-neo-pct').innerText = `${summary.porcentaje_neos}%`;
+
+  document.getElementById('batch-avg-albedo').innerText = summary.albedo_promedio.toFixed(3);
+  document.getElementById('batch-max-diam').innerText = `${summary.diametro_maximo_km.toLocaleString()} km`;
+
+  // Renderizar Barras de Distribución Taxonómica
+  const barsContainer = document.getElementById('batch-distribution-bars');
+  barsContainer.innerHTML = '';
+
+  const classColorMap = {
+    'Metálico (Fe-Ni, Oro, Platino)': { bg: 'bg-amber-600', text: 'text-amber-900', label: 'Metálico (Fe-Ni, Pt, Au)' },
+    'Carbonáceo (Agua, Compuestos Orgánicos)': { bg: 'bg-emerald-600', text: 'text-emerald-900', label: 'Carbonáceo (Agua H2O)' },
+    'Silicatos / Rocoso (Mg-Fe, Piroxeno)': { bg: 'bg-blue-600', text: 'text-blue-900', label: 'Silicatos / Rocoso' },
+    'Basáltico (Magmático, Rocas Ígneas)': { bg: 'bg-orange-600', text: 'text-orange-900', label: 'Basáltico Ígneo' }
+  };
+
+  for (const [clsName, count] of Object.entries(summary.distribucion_composicion)) {
+    const pct = summary.porcentajes_composicion[clsName] || 0;
+    const styleInfo = classColorMap[clsName] || { bg: 'bg-lab-700', text: 'text-lab-900', label: clsName };
+
+    const barEl = document.createElement('div');
+    barEl.className = 'space-y-1.5';
+    barEl.innerHTML = `
+      <div class="flex justify-between items-center text-xs">
+        <span class="font-semibold ${styleInfo.text}">${styleInfo.label}</span>
+        <span class="font-mono text-lab-600 font-medium">${count} (${pct}%)</span>
+      </div>
+      <div class="w-full bg-lab-100 h-2 rounded-full overflow-hidden border border-lab-200">
+        <div class="h-full ${styleInfo.bg} rounded-full transition-all duration-700" style="width: ${pct}%;"></div>
+      </div>
+    `;
+    barsContainer.appendChild(barEl);
+  }
+
+  // Renderizar Top 5 Objetivos Mineros Prioritarios
+  const topTargetsContainer = document.getElementById('top-targets-container');
+  topTargetsContainer.innerHTML = '';
+
+  data.top_targets.forEach((target, index) => {
+    const cardEl = document.createElement('div');
+    const badgeClass = `badge-${target.badge_color || 'metal'}`;
+
+    cardEl.className = 'p-3.5 rounded-xl border border-lab-200 bg-white hover:bg-lab-50/70 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs';
+    cardEl.innerHTML = `
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 rounded-lg bg-lab-900 text-white font-mono font-bold text-xs flex items-center justify-center shrink-0">
+          #${index + 1}
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-display font-bold text-sm text-lab-900">${target.nombre}</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${badgeClass}">
+              ${target.clase_corta}
+            </span>
+            ${target.es_metalico ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-900 border border-amber-300 font-mono font-bold">Metal: ${target.probabilidad_metalica}%</span>` : ''}
+          </div>
+          <p class="text-xs text-lab-500 mt-0.5">
+            ${target.zona_orbital} &bull; Diámetro: <span class="font-mono font-medium text-lab-800">${target.diametro_km} km</span>
+          </p>
+        </div>
+      </div>
+      <div class="text-right sm:text-right">
+        <span class="text-[11px] font-medium text-lab-700 block">${target.valor_estrategico}</span>
+        <span class="text-[11px] font-mono text-emerald-700 font-semibold">${target.confianza}% confianza</span>
+      </div>
+    `;
+    topTargetsContainer.appendChild(cardEl);
+  });
+
+  // Renderizar Tabla Completa
+  currentFilteredRecords = data.records;
+  renderBatchTable(data.records);
+
+  // Mostrar contenedor y desplazar suavemente
+  reportContainer.classList.remove('hidden');
+  reportContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+// 13. Renderizado de Filas de la Tabla
+function renderBatchTable(records) {
+  const tbody = document.getElementById('batch-table-body');
+  const countText = document.getElementById('table-showing-text');
+  tbody.innerHTML = '';
+
+  if (countText) {
+    const total = currentBatchReport ? currentBatchReport.records.length : records.length;
+    countText.innerText = `Mostrando ${records.length} de ${total} registros`;
+  }
+
+  if (records.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center py-8 text-lab-400">
+          No se encontraron asteroides que coincidan con los filtros aplicados.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  records.forEach((row) => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-lab-50 transition border-b border-lab-100';
+
+    const badgeClass = `badge-${row.badge_color || 'metal'}`;
+    const metalBadge = row.es_metalico 
+      ? `<span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300">SÍ (${row.probabilidad_metalica}%)</span>`
+      : `<span class="text-lab-400 font-mono text-[11px]">No (${row.probabilidad_metalica}%)</span>`;
+
+    tr.innerHTML = `
+      <td class="py-3 px-4 font-semibold text-lab-900 font-display whitespace-nowrap">${row.nombre_asteroide}</td>
+      <td class="py-3 px-3 whitespace-nowrap">
+        <span class="px-2 py-0.5 rounded text-[11px] font-medium ${badgeClass}">
+          ${row.clase_corta}
+        </span>
+      </td>
+      <td class="py-3 px-3 font-mono text-xs font-semibold text-lab-800">${row.confianza}%</td>
+      <td class="py-3 px-3 whitespace-nowrap">${metalBadge}</td>
+      <td class="py-3 px-3 font-mono text-xs text-lab-700">${row.albedo_geometrico.toFixed(3)}</td>
+      <td class="py-3 px-3 font-mono text-xs text-lab-900">${row.diametro_km.toLocaleString()}</td>
+      <td class="py-3 px-3 text-xs text-lab-600 max-w-xs truncate" title="${row.zona_orbital}">${row.zona_orbital}</td>
+      <td class="py-3 px-4 text-xs text-lab-700 font-medium">${row.potencial_minero}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 14. Filtros Interactivos de la Tabla
+function filterBatchTable() {
+  if (!currentBatchReport || !currentBatchReport.records) return;
+
+  const searchVal = document.getElementById('table-search-input').value.toLowerCase().trim();
+  const classVal = document.getElementById('table-class-filter').value;
+  const orbitVal = document.getElementById('table-orbit-filter').value;
+
+  const filtered = currentBatchReport.records.filter(row => {
+    // Filtro por texto
+    if (searchVal && !row.nombre_asteroide.toLowerCase().includes(searchVal)) {
+      return false;
+    }
+    // Filtro por clase
+    if (classVal !== 'ALL') {
+      if (row.clase_corta !== classVal) return false;
+    }
+    // Filtro por órbita
+    if (orbitVal !== 'ALL') {
+      if (!row.zona_orbital.toLowerCase().includes(orbitVal.toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  currentFilteredRecords = filtered;
+  renderBatchTable(filtered);
+}
+
+// 15. Exportar Reporte a CSV
+async function downloadProcessedCSV() {
+  if (!currentBatchReport) return;
+
+  // Si tenemos el archivo cargado, solicitamos la exportación directa al endpoint de backend
+  if (currentBatchFile) {
+    try {
+      const formData = new FormData();
+      formData.append('file', currentBatchFile);
+
+      const res = await fetch('/api/v1/predict/batch/export', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        triggerDownload(blob, 'reporte_asteroides_predicciones.csv');
+        return;
+      }
+    } catch (e) {
+      console.warn('Fallback a exportación local CSV:', e);
+    }
+  }
+
+  // Fallback: Generación de CSV desde el objeto en memoria
+  const records = currentBatchReport.records;
+  const headers = [
+    'Asteroide', 'Composicion_Predicha', 'Confianza_Pct', 'Es_Metalico',
+    'Probabilidad_Metalica_Pct', 'Potencial_Minero_ISRU', 'Zona_Orbital',
+    'Albedo_Visual_pv', 'Diametro_km', 'Magnitud_H', 'Semieje_Mayor_AU',
+    'Excentricidad', 'Inclinacion_deg', 'Perihelio_AU', 'Rotacion_horas'
+  ];
+
+  const rows = records.map(r => [
+    `"${r.nombre_asteroide}"`,
+    `"${r.prediccion}"`,
+    r.confianza,
+    r.es_metalico,
+    r.probabilidad_metalica,
+    `"${r.potencial_minero}"`,
+    `"${r.zona_orbital}"`,
+    r.albedo_geometrico,
+    r.diametro_km,
+    r.magnitud_absoluta_H,
+    r.semieje_mayor_au,
+    r.excentricidad,
+    r.inclinacion_grados,
+    r.distancia_perihelio_au,
+    r.periodo_rotacion_horas
+  ].join(','));
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  triggerDownload(blob, 'reporte_asteroides_predicciones.csv');
+}
+
+// 16. Exportar Reporte a JSON
+function downloadProcessedJSON() {
+  if (!currentBatchReport) return;
+  const jsonContent = JSON.stringify(currentBatchReport, null, 2);
+  const blob = new Blob([jsonContent], { type: 'application/json' });
+  triggerDownload(blob, 'reporte_asteroides_predicciones.json');
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Exponer funciones globales para interacción HTML
+window.switchMode = switchMode;
+window.handleFileSelected = handleFileSelected;
+window.clearSelectedFile = clearSelectedFile;
+window.loadAndRunSampleDataset = loadAndRunSampleDataset;
+window.filterBatchTable = filterBatchTable;
+window.downloadProcessedCSV = downloadProcessedCSV;
+window.downloadProcessedJSON = downloadProcessedJSON;

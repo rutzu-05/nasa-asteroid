@@ -274,9 +274,66 @@ async function runTestSuite() {
     console.log('    [SCREENSHOT] tests/screenshots/06_form_reset.png guardado.\n');
 
     // -------------------------------------------------------------------------
-    // TEST 8: Auditoría de Errores en Consola
+    // TEST 8: Procesamiento Masivo & Generación de Reportes (CSV / Excel)
     // -------------------------------------------------------------------------
-    console.log('--> PASO 8: Auditoría de Consola del Navegador');
+    console.log('--> PASO 8: Flujo de Procesamiento Masivo y Generación de Reporte');
+
+    // Cambiar a Modo Masivo
+    await page.click('#tab-batch-btn');
+    const isBatchActive = await page.evaluate(() => {
+      const singleHidden = document.getElementById('single-mode-view').classList.contains('hidden');
+      const batchVisible = !document.getElementById('batch-mode-view').classList.contains('hidden');
+      return singleHidden && batchVisible;
+    });
+    assert(isBatchActive, 'Transición a modo Procesamiento Masivo exitosa');
+
+    // Cargar dataset de prueba con 1 clic
+    console.log('    Ejecutando carga automática del dataset de prueba NASA...');
+    const [batchResponse] = await Promise.all([
+      page.waitForResponse(res => res.url().includes('/api/v1/predict/batch') && res.status() === 200),
+      page.click('button:has-text("Cargar Dataset de Prueba")')
+    ]);
+
+    const batchData = await batchResponse.json();
+    assert(batchData.status === 'success', 'Respuesta exitosa de /api/v1/predict/batch');
+    assert(batchData.summary.total_registros === 16, 'Total de asteroides procesados: 16');
+    assert(batchData.summary.conteo_metalicos === 6, 'Total de cuerpos metálicos detectados: 6');
+
+    // Esperar a que el contenedor del reporte esté visible
+    await page.waitForSelector('#batch-report-container:not(.hidden)');
+
+    const kpiTotal = await page.textContent('#kpi-total-count');
+    const kpiMetal = await page.textContent('#kpi-metal-count');
+    const kpiWater = await page.textContent('#kpi-water-count');
+    assert(kpiTotal.trim() === '16', `KPI Total analizados renderizado: ${kpiTotal}`);
+    assert(kpiMetal.trim() === '6', `KPI Yacimientos metálicos renderizado: ${kpiMetal}`);
+    assert(kpiWater.trim() === '4', `KPI Recursos hídricos renderizado: ${kpiWater}`);
+
+    // Verificar Top 5 Objetivos
+    const topCards = await page.$$('#top-targets-container > div');
+    assert(topCards.length === 5, `Top 5 Objetivos Mineros renderizados (${topCards.length})`);
+
+    // Verificar tabla de resultados (16 filas iniciales)
+    let tableRows = await page.$$('#batch-table-body tr');
+    assert(tableRows.length === 16, `Tabla contiene 16 filas de asteroides (${tableRows.length})`);
+
+    // Probar filtro de búsqueda en tiempo real
+    await page.fill('#table-search-input', 'Psyche');
+    await page.evaluate(() => window.filterBatchTable());
+    tableRows = await page.$$('#batch-table-body tr');
+    assert(tableRows.length === 1, `Filtro de búsqueda "Psyche" redujo la tabla a 1 fila (${tableRows.length})`);
+
+    // Limpiar filtro
+    await page.fill('#table-search-input', '');
+    await page.evaluate(() => window.filterBatchTable());
+
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, '07_batch_report_dashboard.png'), fullPage: true });
+    console.log('    [SCREENSHOT] tests/screenshots/07_batch_report_dashboard.png guardado.\n');
+
+    // -------------------------------------------------------------------------
+    // TEST 9: Auditoría de Errores en Consola
+    // -------------------------------------------------------------------------
+    console.log('--> PASO 9: Auditoría de Consola del Navegador');
     const filteredErrors = consoleErrors.filter(err => !err.includes('favicon.ico'));
     assert(filteredErrors.length === 0, `Cero errores de JavaScript en consola durante toda la sesión (Encontrados: ${filteredErrors.length})`);
 

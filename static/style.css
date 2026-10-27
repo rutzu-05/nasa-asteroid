@@ -93,16 +93,50 @@ button:active {
   transform: scale(0.985);
 }
 
+/* Badges de Clases Minerales Material 3 */
+.badge-metal {
+  background-color: #FEF3C7;
+  color: #78350F;
+  border: 1px solid #FCD34D;
+}
+.badge-carbon {
+  background-color: #D1FAE5;
+  color: #064E3B;
+  border: 1px solid #6EE7B7;
+}
+.badge-silicate {
+  background-color: #DBEAFE;
+  color: #1E3A8A;
+  border: 1px solid #93C5FD;
+}
+.badge-basalt {
+  background-color: #FFEDD5;
+  color: #7C2D12;
+  border: 1px solid #FDBA74;
+}
+
+/* Zona de arrastre / Dropzone para archivos */
+.dropzone-container {
+  border: 2px dashed #CBD5E1;
+  background-color: #F8F9FA;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dropzone-container.drag-over {
+  border-color: #0F172A;
+  background-color: #F1F5F9;
+  transform: scale(1.005);
+}
+
 /* Estilo para impresión / Reporte Científico descargable */
 @media print {
   body {
     background-color: #FFFFFF !important;
     color: #000000 !important;
   }
-  header, footer, #asteroid-form button, .preset-chips {
+  header, footer, #asteroid-form button, .preset-chips, .no-print {
     display: none !important;
   }
-  #results-card {
+  #results-card, #batch-report-container {
     border: 1px solid #94A3B8 !important;
     box-shadow: none !important;
     page-break-inside: avoid;

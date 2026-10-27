@@ -1,0 +1,17 @@
+Asteroide,Composicion_Predicha,Confianza_Pct,Es_Metalico,Probabilidad_Metalica_Pct,Potencial_Minero_ISRU,Zona_Orbital,Albedo_Visual_pv,Diametro_km,Magnitud_H,Semieje_Mayor_AU,Excentricidad,Inclinacion_deg,Perihelio_AU,Rotacion_horas
+16 Psyche,"Metálico (Fe-Ni, Oro, Platino)",48.73,True,90.34,"Máxima Prioridad Económica (Au, Pt, Ni, Fe)",Cinturón Principal de Asteroides,0.12,226.0,5.9,2.924,0.134,3.09,2.532,4.196
+101955 Bennu,"Carbonáceo (Agua, Compuestos Orgánicos)",50.21,False,28.8,Estratégico para Repostaje & H2O,NEO (Cercano a la Tierra) - Máxima Accesibilidad,0.046,0.492,20.6,1.126,0.203,6.03,0.897,4.296
+4 Vesta,"Basáltico (Magmático, Rocas Ígneas)",96.63,False,22.62,Valor Geológico & Blindaje,Cinturón Principal de Asteroides,0.423,525.4,3.2,2.361,0.089,7.14,2.151,5.342
+433 Eros,"Silicatos / Rocoso (Mg-Fe, Piroxeno)",84.72,False,24.01,"Manufactura Orbital (Silicio, Piroxeno)",NEO (Cercano a la Tierra) - Máxima Accesibilidad,0.25,16.84,11.16,1.458,0.223,10.83,1.133,5.27
+1 Ceres,"Carbonáceo (Agua, Compuestos Orgánicos)",69.2,False,34.42,Estratégico para Repostaje & H2O,Cinturón Principal de Asteroides,0.09,939.4,3.34,2.767,0.078,10.59,2.551,9.074
+21 Lutetia,"Silicatos / Rocoso (Mg-Fe, Piroxeno)",50.56,True,40.51,"Manufactura Orbital (Silicio, Piroxeno)",Cinturón Principal de Asteroides,0.221,95.76,7.35,2.435,0.163,3.06,2.038,8.167
+162173 Ryugu,"Carbonáceo (Agua, Compuestos Orgánicos)",46.9,False,21.07,Estratégico para Repostaje & H2O,NEO (Cercano a la Tierra) - Máxima Accesibilidad,0.045,0.896,19.2,1.189,0.19,5.88,0.963,7.632
+216 Kleopatra,"Metálico (Fe-Ni, Oro, Platino)",84.2,True,66.12,"Máxima Prioridad Económica (Au, Pt, Ni, Fe)",Cinturón Principal de Asteroides,0.116,122.0,7.3,2.793,0.252,13.14,2.089,5.385
+99942 Apophis,"Silicatos / Rocoso (Mg-Fe, Piroxeno)",56.13,False,26.0,"Manufactura Orbital (Silicio, Piroxeno)",NEO (Cercano a la Tierra) - Máxima Accesibilidad,0.23,0.37,19.7,0.922,0.191,3.33,0.746,30.56
+65803 Didymos,"Silicatos / Rocoso (Mg-Fe, Piroxeno)",40.95,False,32.05,"Manufactura Orbital (Silicio, Piroxeno)",NEO (Cercano a la Tierra) - Máxima Accesibilidad,0.15,0.78,18.1,1.644,0.384,3.41,1.013,2.26
+1929 Kollaa,"Basáltico (Magmático, Rocas Ígneas)",77.89,False,16.2,Valor Geológico & Blindaje,Cinturón Principal de Asteroides,0.38,7.8,12.2,2.362,0.076,7.78,2.182,4.188
+349 Dembowska,"Silicatos / Rocoso (Mg-Fe, Piroxeno)",62.7,True,53.43,"Manufactura Orbital (Silicio, Piroxeno)",Cinturón Principal de Asteroides,0.342,139.7,5.93,2.926,0.089,8.26,2.666,4.701
+2 Pallas,"Metálico (Fe-Ni, Oro, Platino)",35.49,True,31.53,"Máxima Prioridad Económica (Au, Pt, Ni, Fe)",Cinturón Principal de Asteroides,0.159,511.0,4.13,2.772,0.231,34.84,2.132,7.813
+10 Hygiea,"Carbonáceo (Agua, Compuestos Orgánicos)",73.59,False,33.15,Estratégico para Repostaje & H2O,Cinturón Principal de Asteroides,0.072,407.1,5.43,3.139,0.117,3.84,2.772,27.63
+22 Kalliope,"Metálico (Fe-Ni, Oro, Platino)",44.32,True,82.09,"Máxima Prioridad Económica (Au, Pt, Ni, Fe)",Cinturón Principal de Asteroides,0.142,181.0,6.45,2.91,0.1,13.71,2.619,4.148
+2062 Aten,"Silicatos / Rocoso (Mg-Fe, Piroxeno)",83.69,False,4.53,"Manufactura Orbital (Silicio, Piroxeno)",NEO (Cercano a la Tierra) - Máxima Accesibilidad,0.26,0.9,16.8,0.967,0.183,18.93,0.79,40.77
